@@ -235,7 +235,6 @@ studentSchema.methods.matchPassword = async function (enteredPassword) {
 
 // High-performance compound indexes for scaling to 100k+ students
 studentSchema.index({ studentId: 1 }, { unique: true });
-studentSchema.index({ email: 1 });
 studentSchema.index({ institutionId: 1, isActive: 1 });
 studentSchema.index({ institutionId: 1, session: 1, semester: 1 });
 studentSchema.index({ 'currentClass.session': 1, 'currentClass.semester': 1 });
