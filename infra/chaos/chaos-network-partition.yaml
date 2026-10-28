@@ -1,0 +1,18 @@
+# Chaos Mesh Network Partition Experiment (Workstream 5.1)
+# Simulates a bi-directional network partition to verify Raft/majority quorum isolation
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: simulate-database-partition
+  namespace: chaos-testing
+spec:
+  action: partition
+  mode: fixed
+  value: '1'
+  selector:
+    namespaces:
+      - production-db
+    labelSelectors:
+      role: 'standby-node-3'
+  direction: both
+  duration: '60s'

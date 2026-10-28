@@ -1,0 +1,20 @@
+# Istio / Envoy Outlier Detection & Circuit Breaking Policy (Workstream 1.1)
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: core-api-circuit-breaker
+  namespace: default
+spec:
+  host: core-api-service.default.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1024
+      http:
+        http1MaxPendingRequests: 100
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100

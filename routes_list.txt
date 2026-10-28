@@ -1,0 +1,111 @@
+
+Line
+----
+// @route   GET /api/v1/activities
+// @route   POST /api/v1/assignments
+// @route   GET /api/v1/assignments/my
+// @route   GET /api/v1/assignments
+// @route   DELETE /api/v1/assignments/:id
+// @route   GET /api/v1/attendance/students
+// @route   PUT /api/v1/attendance/bulk
+// @route   POST /api/v1/auth/register
+// @route   POST /api/v1/auth/login
+// @route   GET /api/v1/auth/me
+// @route   PUT /api/v1/auth/updatedetails
+// @route   GET /api/v1/auth/users/count
+// @route   GET /api/v1/inventory/items
+// @route   POST /api/v1/inventory/items
+// @route   PUT /api/v1/inventory/items/:id
+// @route   DELETE /api/v1/inventory/items/:id
+// @route   GET /api/v1/inventory/issuance
+// @route   POST /api/v1/inventory/issuance
+// @route   PUT /api/v1/inventory/issuance/:id
+// @route   POST /api/v1/media/upload
+// @route   GET /api/v1/media
+// @route   PUT /api/v1/media/:id
+// @route   DELETE /api/v1/media/:id
+// @route   POST /api/v1/media/delete-bulk
+// @route   POST /api/v1/notifications
+// @route   GET /api/v1/notifications/my
+// @route   GET /api/v1/notifications
+// @route   DELETE /api/v1/notifications/:id
+// @route   GET /api/v1/roles
+// @route   GET /api/v1/roles/:id
+// @route   POST /api/v1/roles
+// @route   PUT /api/v1/roles/:id
+// @route   DELETE /api/v1/roles/:id
+// @route   GET /api/v1/staff
+// @route   POST /api/v1/staff
+// @route   PUT /api/v1/staff/:id
+// @route   DELETE /api/v1/staff/:id
+// @route   GET /api/v1/staff/leaves
+// @route   POST /api/v1/staff/leaves
+// @route   PUT /api/v1/staff/leaves/:id
+// @route   DELETE /api/v1/staff/leaves/:id
+// @route   GET /api/v1/staff/attendance?date=YYYY-MM-DD
+// @route   POST /api/v1/staff/attendance
+// @route   GET /api/v1/staff/payroll?month=M&year=YYYY
+// @route   POST /api/v1/staff/payroll/generate
+// @route   PUT /api/v1/staff/payroll/:id
+// @route   GET /api/students
+// @route   POST /api/students/signup
+// @route   POST /api/students
+// @route   POST /api/students/bulk
+// @route   PUT /api/students/:id
+// @route   DELETE /api/students/:id
+// @route   POST /api/students/login
+// @route   GET /api/students/me
+// @route   PUT /api/students/me
+// @route   POST /api/v1/study-materials
+// @route   GET /api/v1/study-materials/my
+// @route   GET /api/v1/study-materials
+// @route   DELETE /api/v1/study-materials/:id
+// @route   GET /api/v1/tickets
+// @route   GET /api/v1/tickets/my
+// @route   POST /api/v1/tickets
+// @route   PUT /api/v1/tickets/:id
+// @route   GET /api/v1/users
+// @route   GET /api/v1/users/:id
+// @route   POST /api/v1/users
+// @route   PUT /api/v1/users/:id
+// @route   DELETE /api/v1/users/:id
+// @route   GET /api/v1/audit-logs
+// @route   GET /api/v1/audit-logs/soc-metrics
+// @route   GET /api/v1/auth/sessions
+// @route   POST /api/v1/auth/sessions/revoke/:id
+// @route   POST /api/v1/auth/sessions/revoke-all
+// @route   GET /api/v1/privacy/requests
+// @route   POST /api/v1/privacy/requests
+// @route   PUT /api/v1/privacy/requests/:id
+// @route   Public Portal: /safety (UGC Anti-Ragging, POSH/ICC, Equal Opportunity, Confidential Grievances)
+// @route   Public Portal: /privacy (DPDP Data Subject Access Requests, Erasure, Parental Consent)
+// @route   Admin Center:  /admin/safety (Safety incident oversight & regulatory dispatch)
+// @route   Admin Center:  /admin/privacy (DPDP request fulfillment & consent register)
+// @route   Admin Center:  /admin/soc-security (SOC SIEM threat monitor & audit trail)
+// @route   Admin Center:  /admin/sessions (Real-time active session manager & remote revocation)
+// @route   GET    /api/v1/courses (NCrF Modular Academic Hierarchy: Dept, Programme, Level, Credits)
+// @route   POST   /api/v1/courses (Create NCrF Department & Course Offerings)
+// @route   PUT    /api/v1/courses/:id (Update NCrF Academic Hierarchy)
+// @route   DELETE /api/v1/courses/:id (Delete Department)
+// @route   POST   /api/v1/students/:id/reveal-apaar (Decrypt unmasked APAAR ID with forensic AuditLog)
+// @route   POST   /api/v1/students/:id/sync-abc (Sync with Academic Bank of Credits & DigiLocker)
+// @route   Admin Page:    /admin/courses (NCrF Academic Architecture & Curriculum Engine)
+// @route   Public Signup: /erp/signup (DPDP Section 9 Child Safety & Minor Parental Consent Gate)
+// @route   GET    /api/v1/fees/stats (Aggregate Institutional Finance & Collection KPIs)
+// @route   GET    /api/v1/fees (Query Fee Ledger with Student, Method & Status Filters)
+// @route   POST   /api/v1/fees (Cashier Fee Payment Collection with Concession Adjustments)
+// @route   GET    /api/v1/fees/receipt/:receiptNumber (Formal Printable Receipt Payload)
+// @route   POST   /api/v1/fees/simulate-online (Student Self-Serve Online Payment Simulation)
+// @route   Admin Page:    /admin/fee-portal (Campus Treasury & Fee Cashier Console with Receipt Print)
+// @route   Student Tab:   /student-dashboard (Fees Tab: Online Checkout Modal & Official Receipt Viewer)
+// @route   GET    /api/v1/exams (List Semester Examination Schedules & Timetables)
+// @route   POST   /api/v1/exams (Create Semester Examination Schedule with OBE Course Outcomes)
+// @route   GET    /api/v1/exams/:id (Exam Timetable, Student Eligibility Matrix & CO Attainments)
+// @route   PUT    /api/v1/exams/:id (Update Exam Schedule & Subject Slots)
+// @route   POST   /api/v1/exams/:id/eligibility-check (Automated 75% Attendance Gate for Hall Tickets)
+// @route   POST   /api/v1/exams/:id/record-marks (Record Marks, UGC 10-Point Grade Letters, SGPA/CGPA)
+// @route   GET    /api/v1/exams/:id/student-transcript/:studentId (Printable Transcript & OBE Matrix)
+// @route   Admin Page:    /admin/exam-controller (Exam & OBE Controller Portal: Hall Tickets & Grades)
+// @route   Admin Page:    /admin/help (Interactive Step-by-Step Playbooks & Administrator FAQ Hub)
+
+

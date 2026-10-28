@@ -1,0 +1,19 @@
+# Chaos Mesh Pod Failure Experiment (Workstream 5.1)
+# Injects SIGKILL on 3 of 5 application pods to verify Envoy outlier ejection and zero downtime recovery
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: simulate-app-pod-kill
+  namespace: chaos-testing
+spec:
+  action: pod-kill
+  mode: fixed
+  value: '3'
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: erp-api
+  duration: '30s'
+  scheduler:
+    cron: '@every 10m'

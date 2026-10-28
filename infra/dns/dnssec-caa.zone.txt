@@ -1,0 +1,32 @@
+; DNSSEC and Strict Certification Authority Authorization (CAA) Records
+; shyvora.internal / shyvora.com Authoritative Zone Configuration
+
+$TTL 3600
+@       IN      SOA     ns1.shyvora.internal. hostmaster.shyvora.internal. (
+                        2026102701 ; Serial
+                        7200       ; Refresh (2 hours)
+                        3600       ; Retry (1 hour)
+                        1209600    ; Expire (2 weeks)
+                        3600       ; Minimum TTL
+)
+
+; Authoritative Nameservers
+@       IN      NS      ns1.shyvora.internal.
+@       IN      NS      ns2.shyvora.internal.
+
+; Strict CAA Records: Forbids Wildcards for Unauthorized CAs
+; Only allows explicit issuance via Let's Encrypt / DigiCert with strict incident notification email
+@       IN      CAA     0 issue "letsencrypt.org"
+@       IN      CAA     0 issue "digicert.com"
+@       IN      CAA     0 issuewild ";"
+@       IN      CAA     0 iodef "mailto:security-incidents@shyvora.com"
+
+; DNSSEC Signing Configuration
+; Algorithm 13: ECDSA Curve P-256 with SHA-256 (RFC 8624 Recommended)
+; DS (Delegation Signer) & DNSKEY record templates
+@       IN      DNSKEY  256 3 13 (
+                        oJM1OQ82eUm...[Zone Signing Key ZSK]...
+                        )
+@       IN      DNSKEY  257 3 13 (
+                        Bq3w/6/n8A1...[Key Signing Key KSK]...
+                        )

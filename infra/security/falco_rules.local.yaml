@@ -1,0 +1,26 @@
+# /etc/falco/falco_rules.local.yaml
+# Falco Kernel eBPF File Integrity Monitoring (FIM) Rules
+
+- rule: Unauthorized Write to Static Assets
+  desc: Detect write attempt to static web, container root, or binary directories
+  condition: >
+    open_write and container and
+    (fd.name startswith "/app/public" or 
+     fd.name startswith "/usr/bin" or 
+     fd.name startswith "/usr/sbin" or 
+     fd.name startswith "/lib" or 
+     fd.name startswith "/etc")
+  output: >
+    CRITICAL: File integrity breach attempt in container (user=%user.name file=%fd.name cmd=%proc.cmdline container_id=%container.id container_name=%container.name)
+  priority: CRITICAL
+  tags: [filesystem, security, mitre_persistence, fim, dpdp_compliance]
+
+- rule: Spawning Shell in Container
+  desc: Detect unexpected interactive shell spawned inside backend or database container
+  condition: >
+    spawned_process and container and
+    (proc.name in (bash, sh, zsh, ksh, csh) and not proc.pname in (npm, node, docker-entrypoint.sh))
+  output: >
+    CRITICAL: Rogue shell execution detected inside container (user=%user.name shell=%proc.name parent=%proc.pname cmd=%proc.cmdline)
+  priority: CRITICAL
+  tags: [process, execution, mitre_execution]

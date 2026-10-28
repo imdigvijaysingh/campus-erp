@@ -1,0 +1,21 @@
+name: Render Backend 24/7 Anti-Sleep Keep-Alive
+
+on:
+  schedule:
+    # Runs every 10 minutes (before Render's 15-minute inactivity sleep threshold)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Render Backend Health Endpoint
+        run: |
+          echo "Sending keep-alive heartbeat to Render backend..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}s" "https://shyvora-full-stack-backend.onrender.com/health")
+          echo "$RESPONSE"
+          
+          # Optional: Also ping root endpoint
+          curl -s -o /dev/null -w "Root endpoint status: %{http_code} (took %{time_total}s)\n" "https://shyvora-full-stack-backend.onrender.com/"
