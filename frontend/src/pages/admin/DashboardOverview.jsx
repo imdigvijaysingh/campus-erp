@@ -146,7 +146,9 @@ const DashboardOverview = () => {
       const feeData = feeStatsRes.data || {};
       const totalCollected = Number(feeData.totalCollected || 0);
       const totalOutstanding = Number(feeData.totalOutstanding || 0);
-      const collectionRate = feeData.collectionRate || (totalCollected > 0 ? '100.0' : '0.0');
+      const collectionRate = feeData.collectionRate 
+        ? String(Math.min(100, Math.round(Number(feeData.collectionRate)))) 
+        : (totalCollected > 0 ? '100' : '0');
 
       setStats({
         students: studentsCount,
@@ -567,211 +569,205 @@ const DashboardOverview = () => {
       {/* Top Row: KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Card 1: Students */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-[#6D4C9C] shrink-0">
-                <i className="fas fa-user-graduate text-lg"></i>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-[#6D4C9C] shrink-0 shadow-2xs">
+                <i className="fas fa-user-graduate text-base"></i>
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-slate-700">Enrolled Students</p>
-                  <InfoTooltip 
-                    title="Student Enrollment Roster"
-                    text="Total active students enrolled across higher education programs (B.Tech, BCA, MBA, BBA) and K-12 school classes."
-                    tip="All profiles are linked to 12-digit APAAR IDs."
-                  />
-                </div>
-                <div className="flex items-baseline gap-2 mt-0.5">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-700 truncate">Enrolled Students</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
                   <h3 className="text-2xl font-black text-slate-900 font-mono">{stats.students.toLocaleString()}</h3>
-                  <span className="text-[11px] font-semibold text-slate-500 font-mono">
+                  <span className="text-[11px] font-semibold text-slate-500 font-mono whitespace-nowrap">
                     Learners
                   </span>
                 </div>
               </div>
             </div>
-            <Link to="/admin/students" className="text-slate-400 hover:text-[#6D4C9C] transition-colors p-1" title="View Student Directory">
-              <i className="fas fa-arrow-up-right-from-square text-xs"></i>
-            </Link>
-          </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold">
-              <i className="fas fa-circle-check text-[10px]"></i>
-              <span>{stats.students > 0 ? `${stats.students} Enrolled` : 'No Records'}</span>
+            <div className="flex items-center gap-1 shrink-0 -mt-0.5 -mr-1">
+              <InfoTooltip 
+                title="Student Enrollment Roster"
+                text="Total active students enrolled across higher education programs (B.Tech, BCA, MBA, BBA) and K-12 school classes."
+                tip="All profiles are linked to 12-digit APAAR IDs."
+              />
+              <Link to="/admin/students" className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#6D4C9C] hover:bg-slate-50 transition-colors" title="View Student Directory">
+                <i className="fas fa-arrow-up-right-from-square text-[10px]"></i>
+              </Link>
             </div>
-            <span className="text-[10px] text-purple-700 font-bold bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md">
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs gap-1.5">
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+              <i className="fas fa-circle-check text-[9px]"></i>
+              <span>{stats.students > 0 ? `${stats.students} Enrolled` : 'No Records'}</span>
+            </span>
+            <span className="text-[10px] text-purple-700 font-bold bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md whitespace-nowrap">
               {apaarStats.totalSeeded} APAAR Linked
             </span>
           </div>
         </div>
 
         {/* Card 2: AI Risk Radar & Outcome Engine */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
-                <i className="fas fa-brain text-lg"></i>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 shadow-2xs">
+                <i className="fas fa-brain text-base"></i>
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-slate-700">AI Risk Radar</p>
-                  <InfoTooltip 
-                    title="Student Attrition & Exam Debarment Radar"
-                    text="Continuous 4-vector predictive intelligence: Attendance Deficit (35%) + Academic Backlog (30%) + Fee Default (20%) + LMS Disengagement (15%)."
-                    tip="Flags students at-risk of exam debarment (<75% attendance) and academic dropouts."
-                  />
-                </div>
-                <div className="flex items-baseline gap-2 mt-0.5">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-700 truncate">AI Risk Radar</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
                   <h3 className="text-2xl font-black text-slate-900 font-mono">
                     {earlyWarningStats?.highRiskCount ?? attendanceBreakdown.atRiskCount}
                   </h3>
-                  <span className="text-[11px] font-semibold text-rose-600 font-mono">
+                  <span className="text-[11px] font-semibold text-rose-600 font-mono whitespace-nowrap">
                     Critical Risk
                   </span>
                 </div>
               </div>
             </div>
-            <Link 
-              to="/admin/early-warning" 
-              className="text-slate-400 hover:text-[#6D4C9C] transition-colors p-1" 
-              title="Launch AI Risk Engine"
-            >
-              <i className="fas fa-arrow-up-right-from-square text-xs"></i>
-            </Link>
+            <div className="flex items-center gap-1 shrink-0 -mt-0.5 -mr-1">
+              <InfoTooltip 
+                title="Student Attrition & Exam Debarment Radar"
+                text="Continuous 4-vector predictive intelligence: Attendance Deficit (35%) + Academic Backlog (30%) + Fee Default (20%) + LMS Disengagement (15%)."
+                tip="Flags students at-risk of exam debarment (<75% attendance) and academic dropouts."
+              />
+              <Link to="/admin/early-warning" className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-50 transition-colors" title="Launch AI Risk Engine">
+                <i className="fas fa-arrow-up-right-from-square text-[10px]"></i>
+              </Link>
+            </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs gap-1.5">
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-              {earlyWarningStats?.detentionAlertCount ?? attendanceBreakdown.atRiskCount} Debarment (&lt;75%)
+              <span>{earlyWarningStats?.detentionAlertCount ?? attendanceBreakdown.atRiskCount} Debarment</span>
             </span>
             <Link
               to="/admin/early-warning"
-              className="text-[11px] font-bold text-[#6D4C9C] hover:text-purple-800 flex items-center gap-1 group"
+              className="text-[10px] font-bold text-[#6D4C9C] bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2 py-0.5 rounded-md flex items-center gap-1 group whitespace-nowrap transition-colors"
             >
               <span>Launch</span>
-              <i className="fas fa-arrow-right text-[9px] group-hover:translate-x-0.5 transition-transform"></i>
+              <i className="fas fa-arrow-right text-[8px] group-hover:translate-x-0.5 transition-transform"></i>
             </Link>
           </div>
         </div>
 
         {/* Card 3: Faculty & Staff */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-                <i className="fas fa-user-tie text-lg"></i>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 shadow-2xs">
+                <i className="fas fa-user-tie text-base"></i>
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-slate-700">Faculty & Staff</p>
-                  <InfoTooltip 
-                    title="Staff & Faculty Roster"
-                    text="Registered teaching instructors, administrative personnel, and system operators."
-                    tip="Manage departments and payroll in Staff Manager."
-                  />
-                </div>
-                <div className="flex items-baseline gap-2 mt-0.5">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-700 truncate">Faculty & Staff</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
                   <h3 className="text-2xl font-black text-slate-900 font-mono">{stats.faculty}</h3>
-                  <span className="text-[11px] font-semibold text-slate-500 font-mono">
+                  <span className="text-[11px] font-semibold text-slate-500 font-mono whitespace-nowrap">
                     Accounts
                   </span>
                 </div>
               </div>
             </div>
-            <Link to="/admin/staff" className="text-slate-400 hover:text-emerald-600 transition-colors p-1" title="View Staff Directory">
-              <i className="fas fa-arrow-up-right-from-square text-xs"></i>
-            </Link>
+            <div className="flex items-center gap-1 shrink-0 -mt-0.5 -mr-1">
+              <InfoTooltip 
+                title="Staff & Faculty Roster"
+                text="Registered teaching instructors, administrative personnel, and system operators."
+                tip="Manage departments and payroll in Staff Manager."
+              />
+              <Link to="/admin/staff" className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-50 transition-colors" title="View Staff Directory">
+                <i className="fas fa-arrow-up-right-from-square text-[10px]"></i>
+              </Link>
+            </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
-              {staffStats.teaching > 0 ? `${staffStats.teaching} Teaching` : `${stats.faculty} Active Users`}
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs gap-1.5">
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+              <i className="fas fa-user-tie text-[9px]"></i>
+              <span>{staffStats.teaching > 0 ? `${staffStats.teaching} Teaching` : `${stats.faculty} Users`}</span>
             </span>
-            <span className="text-slate-300">•</span>
-            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">
-              {staffStats.support > 0 ? `${staffStats.support} Support Staff` : 'Direct Accounts'}
+            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+              {staffStats.support > 0 ? `${staffStats.support} Support` : 'Direct Accounts'}
             </span>
           </div>
         </div>
 
         {/* Card 4: Institutional Campus Attendance */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                <i className="fas fa-clipboard-user text-lg"></i>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                <i className="fas fa-clipboard-user text-base"></i>
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-slate-700">Campus Attendance</p>
-                  <InfoTooltip 
-                    title="Institutional Roll Call Breakdown"
-                    text="Average attendance percentage computed across all active enrolled students in the database."
-                    tip="Statutory UGC debarment threshold is 75%."
-                  />
-                </div>
-                <div className="flex items-baseline gap-2 mt-0.5">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-700 truncate">Campus Attendance</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
                   <h3 className="text-2xl font-black text-slate-900 font-mono">{stats.attendanceToday}%</h3>
-                  <span className="text-[11px] font-semibold text-slate-500 font-mono">
-                    Avg Roll Call
+                  <span className="text-[11px] font-semibold text-slate-500 font-mono whitespace-nowrap">
+                    Roll Call
                   </span>
                 </div>
               </div>
             </div>
-            <Link to="/admin/erp-attendance" className="text-slate-400 hover:text-blue-600 transition-colors p-1" title="Open BioGate & Roll Call Portal">
-              <i className="fas fa-arrow-up-right-from-square text-xs"></i>
-            </Link>
+            <div className="flex items-center gap-1 shrink-0 -mt-0.5 -mr-1">
+              <InfoTooltip 
+                title="Institutional Roll Call Breakdown"
+                text="Average attendance percentage computed across all active enrolled students in the database."
+                tip="Statutory UGC debarment threshold is 75%."
+              />
+              <Link to="/admin/erp-attendance" className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors" title="Open BioGate & Roll Call Portal">
+                <i className="fas fa-arrow-up-right-from-square text-[10px]"></i>
+              </Link>
+            </div>
           </div>
-
-          {/* Real Cohort Headcount Breakdown Pills */}
-          <div className="mt-3 pt-2.5 border-t border-slate-100 grid grid-cols-2 gap-1.5 text-center">
-            <div className="bg-emerald-50/70 border border-emerald-100 rounded-lg py-1 px-1">
-              <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block">Compliant (&ge;75%)</span>
-              <span className="text-[11px] font-extrabold text-slate-800 font-mono">{attendanceBreakdown.compliantCount}</span>
-            </div>
-            <div className="bg-rose-50/70 border border-rose-100 rounded-lg py-1 px-1">
-              <span className="text-[9px] font-bold text-rose-700 uppercase tracking-wider block">At-Risk (&lt;75%)</span>
-              <span className="text-[11px] font-extrabold text-slate-800 font-mono">{attendanceBreakdown.atRiskCount}</span>
-            </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs gap-1.5">
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+              <i className="fas fa-circle-check text-[9px]"></i>
+              <span>{attendanceBreakdown.compliantCount} Compliant</span>
+            </span>
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              <span>{attendanceBreakdown.atRiskCount} At-Risk</span>
+            </span>
           </div>
         </div>
 
         {/* Card 5: Campus Treasury & Bank Accounts */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
-                <i className="fas fa-vault text-lg"></i>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0 shadow-2xs">
+                <i className="fas fa-vault text-base"></i>
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-slate-700">Campus Treasury</p>
-                  <InfoTooltip 
-                    title="Institutional Treasury & Financial Control"
-                    text="Actual total tuition fees collected and outstanding dues recorded in the database fee ledger."
-                    tip="Click to launch the dedicated Campus Treasury & Accounts Console."
-                  />
-                </div>
-                <div className="flex items-baseline gap-2 mt-0.5">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-700 truncate">Campus Treasury</p>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
                   <h3 className="text-2xl font-black text-slate-900 font-mono">
                     ₹{stats.feesCollected >= 100000 ? `${(stats.feesCollected / 100000).toFixed(1)}L` : Number(stats.feesCollected).toLocaleString()}
                   </h3>
-                  <span className="text-[11px] font-semibold text-emerald-700 font-mono">
+                  <span className="text-[11px] font-semibold text-emerald-700 font-mono whitespace-nowrap">
                     Collected
                   </span>
                 </div>
               </div>
             </div>
-            <Link to="/admin/treasury" className="text-slate-400 hover:text-amber-600 transition-colors p-1" title="Open Treasury & Financial Accounts">
-              <i className="fas fa-arrow-up-right-from-square text-xs"></i>
-            </Link>
+            <div className="flex items-center gap-1 shrink-0 -mt-0.5 -mr-1">
+              <InfoTooltip 
+                title="Institutional Treasury & Financial Control"
+                text="Actual total tuition fees collected and outstanding dues recorded in the database fee ledger."
+                tip="Click to launch the dedicated Campus Treasury & Accounts Console."
+              />
+              <Link to="/admin/treasury" className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-50 transition-colors" title="Open Treasury & Financial Accounts">
+                <i className="fas fa-arrow-up-right-from-square text-[10px]"></i>
+              </Link>
+            </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md" title="Pending student fee receivables">
-              ₹{Number(stats.feesPending).toLocaleString()} Dues
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs gap-1.5">
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0" title="Pending student fee receivables">
+              <i className="fas fa-file-invoice-dollar text-[9px]"></i>
+              <span>₹{Number(stats.feesPending).toLocaleString()} Dues</span>
             </span>
-            <span className="text-slate-300">•</span>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md" title="Collection Efficiency">
-              {stats.collectionRate}% Rate
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md whitespace-nowrap" title="Collection Efficiency">
+              {Math.min(100, Math.round(Number(stats.collectionRate) || 100))}% Rate
             </span>
           </div>
         </div>
