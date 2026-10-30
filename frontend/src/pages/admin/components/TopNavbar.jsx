@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import RedirectOverlay from '../../../components/common/RedirectOverlay';
 import shyvoraLogo from '../../../assets/images/shyvora_s_logo.png';
 import api from '../../../utils/api';
@@ -18,6 +18,7 @@ const formatRelative = (dateInput) => {
 
 const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +96,7 @@ const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
   return (
     <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-[1000] transition-all">
       {/* Left: Sidebar Toggle + Campus Info */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Sleek Ghost Sidebar Toggle */}
         <button 
           onClick={handleSidebarToggle}
@@ -104,6 +105,24 @@ const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
         >
           <i className={`fas ${isCollapsed ? 'fa-bars-staggered' : 'fa-bars'} text-sm`}></i>
         </button>
+
+        {/* Mobile Fast Back Button (Easy 1-tap navigation on phones & tablets) */}
+        {location.pathname !== '/admin/dashboard' && location.pathname !== '/admin' && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                navigate('/admin/dashboard');
+              }
+            }}
+            title="Back to previous page"
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-purple-50 text-[#6D4C9C] hover:bg-purple-100 hover:text-purple-800 transition-colors md:hidden cursor-pointer active:scale-95 border border-purple-100 shadow-2xs"
+          >
+            <i className="fas fa-arrow-left text-xs"></i>
+          </button>
+        )}
 
         {/* Subtle, Borderless Campus Identity */}
         <div className="flex items-center gap-2.5">

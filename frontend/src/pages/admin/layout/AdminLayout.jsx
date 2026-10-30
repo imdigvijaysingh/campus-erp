@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopNavbar from '../components/TopNavbar';
+import Breadcrumbs from '../../../components/common/Breadcrumbs';
 import Toast from '../../../components/common/Toast';
 import GlobalLoader from '../../../components/common/GlobalLoader';
 import ConfirmModal from '../../../components/common/ConfirmModal';
@@ -103,8 +104,11 @@ const AdminLayout = () => {
           toggleCollapse={toggleCollapse}
         />
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-6 lg:p-8 relative">
           <div className="max-w-7xl mx-auto w-full">
+            {/* Universal Breadcrumbs & Mobile/Tablet Back Navigation */}
+            <Breadcrumbs />
+
             {/* Outlet context passes the showToast function to all child routes */}
             <Outlet context={{ showToast, showLoading, hideLoading, showConfirm }} />
           </div>

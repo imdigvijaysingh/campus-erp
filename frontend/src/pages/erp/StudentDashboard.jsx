@@ -2483,8 +2483,54 @@ const StudentDashboard = () => {
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
+            {/* Breadcrumb Navigation for Non-Overview Tabs (Mobile & Tablet friendly) */}
+            {activeTab !== 'overview' && (
+              <div className="mb-4 flex items-center justify-between bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-2xs animate-[modalFadeIn_0.15s_ease-out]">
+                <div className="flex items-center gap-2 text-xs min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('overview')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#6D4C9C] font-bold text-xs border border-purple-200 transition active:scale-95 cursor-pointer shrink-0"
+                    title="Back to Dashboard"
+                  >
+                    <i className="fas fa-arrow-left text-[11px]"></i>
+                    <span>Back</span>
+                  </button>
+                  <div className="h-4 w-px bg-slate-200 shrink-0"></div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('overview')}
+                    className="text-slate-500 hover:text-[#6D4C9C] font-semibold transition shrink-0 hidden xs:inline"
+                  >
+                    Dashboard
+                  </button>
+                  <i className="fas fa-chevron-right text-[9px] text-slate-300 shrink-0 hidden xs:inline"></i>
+                  <span className="font-bold text-[#6D4C9C] bg-purple-50/80 border border-purple-200/70 px-2 py-0.5 rounded-lg truncate">
+                    {{
+                      papers: 'Old & Sample Papers',
+                      fee: 'Fee Report',
+                      notifications: 'Notifications',
+                      assignments: 'Assignments',
+                      studyMaterials: 'Study Material',
+                      events: 'Events & Circulars',
+                      helpdesk: 'Help Desk',
+                      admitCard: 'Admit Card',
+                      reportCard: 'Report Card'
+                    }[activeTab] || activeTab}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('overview')}
+                  className="text-[11px] font-semibold text-slate-400 hover:text-[#6D4C9C] transition hidden sm:inline"
+                >
+                  Return to Overview
+                </button>
+              </div>
+            )}
+
             {activeTab === 'overview' && renderOverview()}
             {activeTab === 'papers' && renderExamPapersArchive()}
             {activeTab === 'fee' && renderFee()}

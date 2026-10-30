@@ -363,16 +363,6 @@ const CampusTreasuryAccounts = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link to="/admin/dashboard" className="text-xs text-slate-400 hover:text-[#6D4C9C] transition-colors flex items-center gap-1">
-              <i className="fas fa-arrow-left text-[10px]"></i>
-              <span>Dashboard</span>
-            </Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
-              Finance & Accounts
-            </span>
-          </div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Campus Treasury & Financial Accounts
