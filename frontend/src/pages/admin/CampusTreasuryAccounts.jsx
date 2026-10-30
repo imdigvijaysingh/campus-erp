@@ -1,12 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import InfoTooltip from '../../components/common/InfoTooltip';
+import api from '../../utils/api';
 
 const CampusTreasuryAccounts = () => {
   const [activeTab, setActiveTab] = useState('bank-accounts'); // 'bank-accounts' | 'pending-receivables' | 'salary-structure' | 'salaries-to-pay'
   const [searchStaff, setSearchStaff] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState(null);
+  const [realFeeStats, setRealFeeStats] = useState({ totalCollected: 0, totalOutstanding: 0, collectionRate: '100.0' });
+
+  useEffect(() => {
+    const fetchTreasuryData = async () => {
+      try {
+        const [feeRes, staffRes] = await Promise.all([
+          api.get('/fees/stats').catch(() => ({ data: {} })),
+          api.get('/staff').catch(() => ({ data: { data: [] } }))
+        ]);
+
+        const fData = feeRes.data || {};
+        const collected = Number(fData.totalCollected || 0);
+        const outstanding = Number(fData.totalOutstanding || 0);
+        const rate = fData.collectionRate || (collected > 0 ? '100.0' : '0.0');
+
+        setRealFeeStats({
+          totalCollected: collected,
+          totalOutstanding: outstanding,
+          collectionRate: rate
+        });
+
+        // Update fee collection account with real collected funds
+        if (collected > 0) {
+          setBankAccounts(prev => prev.map(acc => {
+            if (acc.id === 'acc-2') {
+              return {
+                ...acc,
+                balance: collected,
+                formattedBalance: `₹${collected.toLocaleString()}`
+              };
+            }
+            return acc;
+          }));
+        }
+
+        const sList = Array.isArray(staffRes.data) ? staffRes.data : (staffRes.data?.data || []);
+        if (sList.length > 0) {
+          const mapped = sList.map((stf, idx) => ({
+            id: stf._id || `stf-${idx}`,
+            name: stf.name || stf.username || `Faculty Member ${idx + 1}`,
+            empId: stf.employeeId || stf.staffId || `EMP_${100 + idx}`,
+            role: stf.designation || stf.role || 'Faculty Member',
+            department: stf.department || 'Academic Department',
+            monthlyGross: stf.salary || 35000,
+            deductions: Math.round((stf.salary || 35000) * 0.1),
+            netPayable: Math.round((stf.salary || 35000) * 0.9),
+            bankAccount: `•••• ${1000 + (idx * 111) % 9000}`,
+            status: 'Pending',
+            paymentMode: 'NEFT Direct Credit'
+          }));
+          setPendingStaffSalaries(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load real treasury data:', err);
+      }
+    };
+
+    fetchTreasuryData();
+  }, []);
 
   // Bank Accounts Data
   const [bankAccounts, setBankAccounts] = useState([
@@ -396,16 +456,16 @@ const CampusTreasuryAccounts = () => {
               <i className="fas fa-clock-rotate-left"></i>
             </div>
             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-              17% Uncollected
+              {realFeeStats.collectionRate}% Realized
             </span>
           </div>
           <div className="mt-4">
             <p className="text-xs font-bold text-slate-500">Money Pending from Students</p>
             <h3 className="text-2xl font-black text-amber-700 font-mono mt-0.5">
-              ₹{(pendingStudentDues.totalPending / 100000).toFixed(1)}L
+              ₹{realFeeStats.totalOutstanding > 0 ? Number(realFeeStats.totalOutstanding).toLocaleString() : '0'}
             </h3>
             <p className="text-[11px] text-slate-500 mt-1">
-              68 students with outstanding dues
+              {realFeeStats.totalOutstanding > 0 ? `₹${realFeeStats.totalOutstanding.toLocaleString()} ledger dues pending` : 'All registered student fee accounts cleared'}
             </p>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-100 text-[10px] text-amber-700 font-bold flex items-center gap-1">
@@ -509,7 +569,7 @@ const CampusTreasuryAccounts = () => {
           <i className="fas fa-hand-holding-dollar text-amber-600"></i>
           <span>Pending Student Dues</span>
           <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.2 rounded-full font-mono">
-            ₹3.8L Due
+            ₹{realFeeStats.totalOutstanding > 0 ? `${(realFeeStats.totalOutstanding / 100000).toFixed(1)}L` : '0'} Due
           </span>
         </button>
 

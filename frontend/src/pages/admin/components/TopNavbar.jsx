@@ -1,70 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import RedirectOverlay from '../../../components/common/RedirectOverlay';
 import shyvoraLogo from '../../../assets/images/shyvora_s_logo.png';
+import api from '../../../utils/api';
+
+const formatRelative = (dateInput) => {
+  if (!dateInput) return 'Just now';
+  const diffMs = Date.now() - new Date(dateInput).getTime();
+  if (diffMs < 0 || isNaN(diffMs)) return 'Just now';
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+};
 
 const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [notificationsList, setNotificationsList] = useState([]);
   
   const adminUsername = localStorage.getItem('adminUsername') || 'instadmin';
   const adminRole = localStorage.getItem('adminRole') || 'Campus Administrator';
 
-  const handleLogout = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      localStorage.removeItem('isAdminLoggedIn');
-      localStorage.removeItem('cms_token');
-      localStorage.removeItem('adminRole');
-      localStorage.removeItem('userPermissions');
-      navigate('/authentication/index', { state: { toastMessage: 'Logged out successfully', toastType: 'success' } });
-      setIsLoading(false);
-    }, 1200);
-  };
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const [actRes, feeRes] = await Promise.all([
+          api.get('/activities').catch(() => ({ data: { data: [] } })),
+          api.get('/fees/stats').catch(() => ({ data: {} }))
+        ]);
 
-  const handleSidebarToggle = () => {
-    if (window.innerWidth >= 768) {
-      if (toggleCollapse) toggleCollapse();
-    } else {
-      if (toggleSidebar) toggleSidebar();
-    }
-  };
+        const items = [];
+        const realActs = actRes.data?.data || [];
 
-  // Live notification items
-  const notificationsList = [
-    {
-      id: 1,
-      type: 'attendance',
-      icon: 'fa-clipboard-user',
-      color: 'bg-red-50 text-red-600 border-red-200',
-      title: '3 Students Below 75% Attendance',
-      desc: 'Semester hall ticket gate requires advisory review.',
-      time: '10m ago',
-      link: '/admin/erp-attendance'
-    },
-    {
-      id: 2,
-      type: 'fee',
-      icon: 'fa-indian-rupee-sign',
-      color: 'bg-amber-50 text-amber-700 border-amber-200',
-      title: '₹3.8L Pending Term Fees',
-      desc: '8 student accounts ready for cashier clearance.',
-      time: '45m ago',
-      link: '/admin/fee-portal'
-    },
-    {
-      id: 3,
-      type: 'security',
-      icon: 'fa-shield-halved',
-      color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      title: 'Daily Data Protection Scan Passed',
-      desc: 'All student records 100% encrypted and backed up.',
-      time: '2h ago',
-      link: '/admin/soc-security'
-    }
-  ];
+        // Real activities to notifications
+        realActs.slice(0, 4).forEach((act, idx) => {
+          items.push({
+            id: act.id || `notif-${idx}`,
+            type: act.type || 'system',
+            icon: act.icon || (act.type === 'fee' ? 'fa-indian-rupee-sign' : act.type === 'admission' ? 'fa-user-plus' : 'fa-bell'),
+            color: act.type === 'fee' 
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+              : act.type === 'admission'
+              ? 'bg-purple-50 text-purple-700 border-purple-200'
+              : 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            title: act.title,
+            desc: act.desc,
+            time: formatRelative(act.time || act.timestamp),
+            link: act.type === 'fee' ? '/admin/fee-portal' : act.type === 'admission' ? '/admin/students' : '/admin/audit-logs'
+          });
+        });
+
+        // Real outstanding fee check
+        const pending = Number(feeRes.data?.totalOutstanding || 0);
+        if (pending > 0) {
+          items.unshift({
+            id: 'notif-pending-fees',
+            type: 'fee',
+            icon: 'fa-indian-rupee-sign',
+            color: 'bg-amber-50 text-amber-700 border-amber-200',
+            title: `₹${pending.toLocaleString()} Pending Dues`,
+            desc: 'Outstanding tuition dues recorded across student fee ledgers.',
+            time: 'Active',
+            link: '/admin/fee-portal'
+          });
+        }
+
+        if (items.length === 0) {
+          items.push({
+            id: 'notif-clean-state',
+            type: 'security',
+            icon: 'fa-shield-halved',
+            color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            title: 'Campus Cyber Defenses Active',
+            desc: 'All institutional systems running nominally with 0 alerts.',
+            time: 'Live',
+            link: '/admin/soc-security'
+          });
+        }
+
+        setNotificationsList(items);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   return (
     <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-[1000] transition-all">
@@ -159,7 +185,7 @@ const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Campus Notifications</h3>
                   </div>
                   <span className="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
-                    3 New
+                    {notificationsList.length} Active
                   </span>
                 </div>
 

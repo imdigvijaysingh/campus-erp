@@ -653,26 +653,26 @@ const StudentDashboard = () => {
     if (courseStr.includes('8') || courseStr.includes('school')) {
       // Class 8th Schedule
       return [
-        { period: 'Period 1', time: '09:00 - 09:45 AM', subject: 'Mathematics', room: 'Room 12', teacher: 'Mrs. Neha Gupta', isLive: true, color: 'bg-amber-500' },
-        { period: 'Period 2', time: '09:45 - 10:30 AM', subject: 'General Science', room: 'Room 12', teacher: 'Mr. Rajesh Khanna', color: 'bg-emerald-500' },
-        { period: 'Period 3', time: '10:45 - 11:30 AM', subject: 'English Literature', room: 'Room 12', teacher: 'Ms. Ananya Sen', color: 'bg-indigo-500' },
-        { period: 'Period 4', time: '11:30 - 12:15 PM', subject: 'Social Studies', room: 'Room 12', teacher: 'Mr. Vikram Singh', color: 'bg-blue-500' },
+        { period: 'Period 1', time: '09:00 - 09:45 AM', subject: 'Mathematics', room: 'Room 12', teacher: 'Subject Faculty', isLive: true, color: 'bg-amber-500' },
+        { period: 'Period 2', time: '09:45 - 10:30 AM', subject: 'General Science', room: 'Room 12', teacher: 'Science Instructor', color: 'bg-emerald-500' },
+        { period: 'Period 3', time: '10:45 - 11:30 AM', subject: 'English Literature', room: 'Room 12', teacher: 'Language Instructor', color: 'bg-indigo-500' },
+        { period: 'Period 4', time: '11:30 - 12:15 PM', subject: 'Social Studies', room: 'Room 12', teacher: 'Social Science Mentor', color: 'bg-blue-500' },
       ];
     } else if (courseStr.includes('bca')) {
-      // BCA 4th Sem Schedule
+      // BCA Schedule
       return [
-        { period: 'Period 1', time: '09:30 - 10:30 AM', subject: 'Java Programming', room: 'Lab 1', teacher: 'Dr. Sharma', isLive: true, color: 'bg-purple-600' },
-        { period: 'Period 2', time: '10:30 - 11:30 AM', subject: 'Operating Systems', room: 'Room B-201', teacher: 'Dr. Meenakshi Iyer', color: 'bg-emerald-500' },
-        { period: 'Period 3', time: '11:45 - 12:45 PM', subject: 'Web Technologies', room: 'Lab 3', teacher: 'Prof. S. K. Roy', color: 'bg-blue-500' },
-        { period: 'Period 4', time: '01:30 - 03:00 PM', subject: 'Database Management Lab', room: 'Lab 2', teacher: 'Prof. Mehta', color: 'bg-pink-500' },
+        { period: 'Period 1', time: '09:30 - 10:30 AM', subject: 'Java Programming', room: 'Lab 1', teacher: 'Course Instructor', isLive: true, color: 'bg-purple-600' },
+        { period: 'Period 2', time: '10:30 - 11:30 AM', subject: 'Operating Systems', room: 'Room B-201', teacher: 'Department Faculty', color: 'bg-emerald-500' },
+        { period: 'Period 3', time: '11:45 - 12:45 PM', subject: 'Web Technologies', room: 'Lab 3', teacher: 'Course Instructor', color: 'bg-blue-500' },
+        { period: 'Period 4', time: '01:30 - 03:00 PM', subject: 'Database Management Lab', room: 'Lab 2', teacher: 'Lab Instructor', color: 'bg-pink-500' },
       ];
     } else {
-      // Default College / B.Tech CSE (6th Sem) Schedule
+      // Default College / B.Tech CSE Schedule
       return [
-        { period: 'Period 1', time: '09:00 - 09:50 AM', subject: 'Data Structures & Algorithms', room: 'Room A-101', teacher: 'Dr. Sharma', isLive: true, color: 'bg-purple-600' },
-        { period: 'Period 2', time: '10:00 - 10:50 AM', subject: 'Database Management Systems', room: 'Room A-203', teacher: 'Prof. Mehta', color: 'bg-emerald-500' },
-        { period: 'Period 3', time: '11:00 - 11:50 AM', subject: 'Computer Networks', room: 'Room B-104', teacher: 'Dr. Verma', color: 'bg-blue-500' },
-        { period: 'Period 4', time: '12:00 - 01:30 PM', subject: 'Algorithms & Problem Solving Lab', room: 'Lab 2', teacher: 'Dr. Sharma', color: 'bg-indigo-500' },
+        { period: 'Period 1', time: '09:00 - 09:50 AM', subject: 'Data Structures & Algorithms', room: 'Room A-101', teacher: 'Course Instructor', isLive: true, color: 'bg-purple-600' },
+        { period: 'Period 2', time: '10:00 - 10:50 AM', subject: 'Database Management Systems', room: 'Room A-203', teacher: 'Department Faculty', color: 'bg-emerald-500' },
+        { period: 'Period 3', time: '11:00 - 11:50 AM', subject: 'Computer Networks', room: 'Room B-104', teacher: 'Course Coordinator', color: 'bg-blue-500' },
+        { period: 'Period 4', time: '12:00 - 01:30 PM', subject: 'Algorithms & Problem Solving Lab', room: 'Lab 2', teacher: 'Lab Instructor', color: 'bg-indigo-500' },
       ];
     }
   };
