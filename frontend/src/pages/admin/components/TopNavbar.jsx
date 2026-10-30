@@ -27,6 +27,26 @@ const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
   const adminUsername = localStorage.getItem('adminUsername') || 'instadmin';
   const adminRole = localStorage.getItem('adminRole') || 'Campus Administrator';
 
+  const handleLogout = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      localStorage.removeItem('isAdminLoggedIn');
+      localStorage.removeItem('cms_token');
+      localStorage.removeItem('adminRole');
+      localStorage.removeItem('userPermissions');
+      navigate('/authentication/index', { state: { toastMessage: 'Logged out successfully', toastType: 'success' } });
+      setIsLoading(false);
+    }, 1200);
+  };
+
+  const handleSidebarToggle = () => {
+    if (window.innerWidth >= 768) {
+      if (toggleCollapse) toggleCollapse();
+    } else {
+      if (toggleSidebar) toggleSidebar();
+    }
+  };
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
