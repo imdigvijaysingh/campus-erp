@@ -29,10 +29,10 @@ const connectDB = async () => {
       wtimeoutMS: 2500
     });
 
-    console.log(`[DATABASE RESILIENCE] Connected securely to MongoDB: ${conn.connection.host}`);
+    console.log('Database connected successfully');
     return conn;
   } catch (error) {
-    console.error(`[DATABASE RESILIENCE ERROR] Initial connection failed: ${error.message}`);
+    console.error(`Database connection error: ${error.message}`);
     // In fail-secure posture, log and handle cleanly
     if (process.env.NODE_ENV === 'production') {
       process.exit(1);
