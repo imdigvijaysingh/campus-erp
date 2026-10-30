@@ -432,46 +432,8 @@ const DashboardOverview = () => {
         </div>
       </div>
 
-      {/* AI Early-Warning Intelligence Radar Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 text-white rounded-3xl p-5 shadow-xl border border-purple-500/25 relative overflow-hidden transition-all hover:border-purple-400/40">
-        <div className="absolute -right-8 -bottom-8 w-64 h-64 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/30 to-indigo-500/30 border border-purple-400/40 flex items-center justify-center text-purple-300 text-xl shrink-0 shadow-inner">
-              <i className="fas fa-brain animate-pulse"></i>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-rose-500/25 text-rose-300 border border-rose-500/40 px-2.5 py-0.5 rounded-full">
-                  AI Outcome Engine
-                </span>
-                <span className="text-[11px] font-mono text-purple-200/90">
-                  Student Attrition & Exam Debarment Radar
-                </span>
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-white mt-1.5 tracking-tight">
-                {earlyWarningStats?.highRiskCount ?? 2} Students in Critical Risk Zone • {earlyWarningStats?.detentionAlertCount ?? 5} Exam Detention Alerts (&lt;75% Attendance)
-              </h3>
-              <p className="text-xs text-purple-200/80 mt-1 max-w-2xl leading-relaxed">
-                Algorithmic outcome model: Attendance (35%) + Internal Marks (30%) + Fee Overdue (20%) + LMS Engagement (15%). Automated WhatsApp alerts and remedial coaching workflows ready.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center">
-            <Link
-              to="/admin/early-warning"
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-900/50 hover:shadow-purple-700/60 transition-all flex items-center gap-2 cursor-pointer group whitespace-nowrap"
-            >
-              <i className="fas fa-satellite-dish text-xs text-purple-200"></i>
-              <span>Launch AI Risk Engine</span>
-              <i className="fas fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Top Row: KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Card 1: Students */}
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
           <div className="flex items-start justify-between">
@@ -508,6 +470,55 @@ const DashboardOverview = () => {
             <span className="text-[10px] text-purple-700 font-bold bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md">
               100% APAAR Seeded
             </span>
+          </div>
+        </div>
+
+        {/* Card 2: AI Risk Radar & Outcome Engine */}
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
+                <i className="fas fa-brain text-lg"></i>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-slate-700">AI Risk Radar</p>
+                  <InfoTooltip 
+                    title="Student Attrition & Exam Debarment Radar"
+                    text="Continuous 4-vector predictive intelligence: Attendance Deficit (35%) + Academic Backlog (30%) + Fee Default (20%) + LMS Disengagement (15%)."
+                    tip="Flags students at-risk of exam debarment (<75% attendance) and academic dropouts."
+                  />
+                </div>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <h3 className="text-2xl font-black text-slate-900 font-mono">
+                    {earlyWarningStats?.highRiskCount ?? 0}
+                  </h3>
+                  <span className="text-[11px] font-semibold text-rose-600 font-mono">
+                    Critical Risk
+                  </span>
+                </div>
+              </div>
+            </div>
+            <Link 
+              to="/admin/early-warning" 
+              className="text-slate-400 hover:text-[#6D4C9C] transition-colors p-1" 
+              title="Launch AI Risk Engine"
+            >
+              <i className="fas fa-arrow-up-right-from-square text-xs"></i>
+            </Link>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              {earlyWarningStats?.detentionAlertCount ?? 1} Debarment (&lt;75%)
+            </span>
+            <Link
+              to="/admin/early-warning"
+              className="text-[11px] font-bold text-[#6D4C9C] hover:text-purple-800 flex items-center gap-1 group"
+            >
+              <span>Launch</span>
+              <i className="fas fa-arrow-right text-[9px] group-hover:translate-x-0.5 transition-transform"></i>
+            </Link>
           </div>
         </div>
 
