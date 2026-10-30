@@ -338,7 +338,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed, toggleCollapse }) => {
         </div>
       </aside>
       
-      {isLoggingOut && <RedirectOverlay message="Signing out safely..." />}
+      {isLoggingOut && <RedirectOverlay message="Logging out..." />}
     </>
   );
 };

@@ -414,7 +414,7 @@ const UnifiedLogin = () => {
           onClose={() => setToast(null)}
         />
       )}
-      {isRedirecting && <RedirectOverlay />}
+      {isRedirecting && <RedirectOverlay message="Logging in..." />}
     </div>
   );
 };

@@ -400,7 +400,7 @@ const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
         </div>
       </div>
       
-      {isLoading && <RedirectOverlay message="Signing out safely..." />}
+      {isLoading && <RedirectOverlay message="Logging out..." />}
     </header>
   );
 };

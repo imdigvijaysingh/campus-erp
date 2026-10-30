@@ -43,6 +43,16 @@ const PROGRAM_DURATION_PRESETS = [
   { label: "5 Years (10 Semesters)", years: 5, semesters: 10, hint: "Integrated Law, B.Arch" },
 ];
 
+const POPULAR_BRANCHES = [
+  "Computer Science & Engineering",
+  "Electronics & Communication Engineering",
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Electrical & Electronics Engineering",
+  "Information Technology",
+  "Artificial Intelligence & Data Science",
+];
+
 const CoursesHierarchyManager = () => {
   const { showToast, showLoading, hideLoading, showConfirm } =
     useOutletContext();
@@ -54,6 +64,8 @@ const CoursesHierarchyManager = () => {
   const [newSubject, setNewSubject] = useState("");
   const [modalSelectedSemester, setModalSelectedSemester] = useState("1st Semester");
   const [activeViewTab, setActiveViewTab] = useState("table"); // 'table' | 'allocator'
+  const [newBranchInput, setNewBranchInput] = useState("");
+  const [isAddingBranchInModal, setIsAddingBranchInModal] = useState(false);
 
   // Matrix Allocator state
   const [matrixDeptId, setMatrixDeptId] = useState("");
@@ -67,6 +79,7 @@ const CoursesHierarchyManager = () => {
     department: "",
     course: "",
     branch: "",
+    branches: [],
     session: "",
     year: "1st Year",
     durationYears: 3,
@@ -266,6 +279,7 @@ const CoursesHierarchyManager = () => {
       department: "",
       course: "",
       branch: "",
+      branches: [],
       session: "",
       year: "1st Year",
       durationYears: 3,
@@ -276,6 +290,64 @@ const CoursesHierarchyManager = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleAddBranchToCourse = async (branchName) => {
+    const nameToAdd = (branchName || newBranchInput).trim();
+    if (!nameToAdd) {
+      showToast("Please enter or select a branch name", "error");
+      return;
+    }
+    if (!viewNodeItem) return;
+
+    const dIdx = viewNodeItem.indices[0];
+    const cIdx = viewNodeItem.indices[1];
+    const dept = departments[dIdx];
+    if (!dept || !dept.courses?.[cIdx]) {
+      showToast("Course not found", "error");
+      return;
+    }
+
+    showLoading("Adding branch...");
+    try {
+      const updatedDept = JSON.parse(JSON.stringify(dept));
+      const course = updatedDept.courses[cIdx];
+      if (!course.branches) course.branches = [];
+
+      // Check if branch already exists
+      if (course.branches.some((b) => b.name.toLowerCase() === nameToAdd.toLowerCase())) {
+        showToast(`Branch "${nameToAdd}" already exists in this course`, "error");
+        hideLoading();
+        return;
+      }
+
+      const sessionName = viewNodeItem.sessionName || "2026-27";
+      const targetDuration = course.durationYears || viewNodeItem.durationYears || 4;
+      const targetSemesters = course.totalSemesters || viewNodeItem.totalSemesters || 8;
+
+      const newBranch = {
+        name: nameToAdd,
+        sessions: [
+          {
+            name: sessionName,
+            durationYears: targetDuration,
+            totalSemesters: targetSemesters,
+            semesters: [],
+          },
+        ],
+      };
+      course.branches.push(newBranch);
+
+      await api.put(`/courses/${dept._id}`, updatedDept);
+      showToast(`Branch "${nameToAdd}" added successfully!`);
+      setNewBranchInput("");
+      setIsAddingBranchInModal(false);
+      await fetchHierarchies();
+    } catch (err) {
+      showToast(err.response?.data?.error || "Failed to add branch", "error");
+    } finally {
+      hideLoading();
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -319,30 +391,51 @@ const CoursesHierarchyManager = () => {
           }
         }
 
-        const hasDeeper = formData.branch || formData.session;
-        if (hasDeeper) {
-          const branchName = formData.branch || "General Branch";
-          if (!course.branches) course.branches = [];
-          let branch = course.branches.find((b) => b.name === branchName);
-          if (!branch) {
-            branch = { name: branchName, sessions: [] };
-            course.branches.push(branch);
-          }
-
-          if (formData.session) {
-            const sessionName = formData.session || "General Session";
-            if (!branch.sessions) branch.sessions = [];
-            let session = branch.sessions.find((s) => s.name === sessionName);
-            if (!session) {
-              session = { 
-                name: sessionName, 
-                durationYears: course.durationYears || courseYears,
-                totalSemesters: course.totalSemesters || courseSemesters,
-                semesters: [] 
-              };
-              branch.sessions.push(session);
+        // Multi-branch collection
+        let branchesToAdd = [];
+        if (Array.isArray(formData.branches) && formData.branches.length > 0) {
+          branchesToAdd = [...formData.branches];
+        }
+        if (formData.branch && formData.branch.trim()) {
+          const typedBranches = formData.branch.split(",").map((b) => b.trim()).filter(Boolean);
+          typedBranches.forEach((b) => {
+            if (!branchesToAdd.includes(b)) {
+              branchesToAdd.push(b);
             }
+          });
+        }
+
+        const hasDeeper = branchesToAdd.length > 0 || formData.session;
+        if (hasDeeper) {
+          if (branchesToAdd.length === 0) {
+            branchesToAdd = ["General Branch"];
           }
+          if (!course.branches) course.branches = [];
+
+          branchesToAdd.forEach((branchName) => {
+            let branch = course.branches.find(
+              (b) => b.name.toLowerCase() === branchName.toLowerCase(),
+            );
+            if (!branch) {
+              branch = { name: branchName, sessions: [] };
+              course.branches.push(branch);
+            }
+
+            if (formData.session) {
+              const sessionName = formData.session || "General Session";
+              if (!branch.sessions) branch.sessions = [];
+              let session = branch.sessions.find((s) => s.name === sessionName);
+              if (!session) {
+                session = { 
+                  name: sessionName, 
+                  durationYears: course.durationYears || courseYears,
+                  totalSemesters: course.totalSemesters || courseSemesters,
+                  semesters: [] 
+                };
+                branch.sessions.push(session);
+              }
+            }
+          });
         }
         await api.put(`/courses/${updatedDept._id}`, updatedDept);
       }
@@ -944,6 +1037,10 @@ const CoursesHierarchyManager = () => {
     setIsModalOpen(true);
   };
 
+  const activeViewDept = departments.find((d) => d._id === viewNodeItem?.deptId) || departments[viewNodeItem?.indices?.[0]];
+  const activeViewCourse = activeViewDept?.courses?.[viewNodeItem?.indices?.[1]];
+  const activeViewCourseBranches = activeViewCourse?.branches || [];
+
   return (
     <div className="animate-[modalFadeIn_0.3s_ease]">
       <div className="mb-6 flex justify-between items-center">
@@ -1296,25 +1393,25 @@ const CoursesHierarchyManager = () => {
         <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50/80 text-gray-700 border-b border-gray-100">
+              <thead className="bg-gray-50/80 text-gray-700 border-b border-gray-100 whitespace-nowrap">
                 <tr>
-                  <th className="p-4 font-semibold">
+                  <th className="p-4 font-semibold whitespace-nowrap">
                     <span className="inline-flex items-center">
                       Department
                       <InfoTooltip title="Academic Department" text="Top-level school/faculty unit (e.g., Engineering, Management, Pharmacy)." position="bottom" />
                     </span>
                   </th>
-                  <th className="p-4 font-semibold">
+                  <th className="p-4 font-semibold whitespace-nowrap">
                     <span className="inline-flex items-center">
                       Course / Degree
                       <InfoTooltip title="Degree Programme" text="Registered degree/diploma program (e.g., B.Tech, MBA, BCA)." position="bottom" />
                     </span>
                   </th>
-                  <th className="p-4 font-semibold">Branch / Stream</th>
-                  <th className="p-4 font-semibold">Academic Session</th>
-                  <th className="p-4 font-semibold">Semesters</th>
-                  <th className="p-4 font-semibold">Subjects Status</th>
-                  <th className="p-4 font-semibold text-right pr-6">Actions</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">Branch / Stream</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">Academic Session</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">Semesters</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">Subjects Status</th>
+                  <th className="p-4 font-semibold text-right pr-6 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -1332,10 +1429,10 @@ const CoursesHierarchyManager = () => {
                   flattenedList.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-purple-50/20 transition-colors group"
+                      className="hover:bg-purple-50/20 transition-colors group whitespace-nowrap"
                     >
-                      <td className="p-4 font-medium text-gray-900">
-                        <div className="flex items-center justify-between group/cell">
+                      <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
+                        <div className="flex items-center justify-between group/cell gap-2">
                           <span className="font-semibold text-gray-800">{item.deptName}</span>
                           <button
                             onClick={() =>
@@ -1353,31 +1450,31 @@ const CoursesHierarchyManager = () => {
                           </button>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
                           <span className="font-semibold text-gray-900">{item.courseName || "-"}</span>
                           {item.courseName && (
-                            <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60 whitespace-nowrap">
+                            <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60 whitespace-nowrap shrink-0">
                               {item.durationYears || Math.round((item.semesterCount || 6) / 2)} Yrs &bull; {item.semesterCount || item.totalSemesters || 6} Sems
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="p-4 text-gray-700">
+                      <td className="p-4 text-gray-700 whitespace-nowrap">
                         <span>{item.branchName || "-"}</span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         {item.sessionName ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200 whitespace-nowrap shrink-0">
                             {item.sessionName}
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         {item.sessionName ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200/70">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200/70 whitespace-nowrap shrink-0">
                             <i className="fas fa-layer-group text-[10px]"></i>
                             <span>{item.semesterCount} Semesters</span>
                           </span>
@@ -1385,45 +1482,38 @@ const CoursesHierarchyManager = () => {
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         {item.sessionName ? (
                           item.totalSubjects > 0 ? (
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
                                 <i className="fas fa-check-circle text-[10px]"></i>
-                                <span>{item.totalSubjects} Subjects Mapped</span>
+                                <span>{item.totalSubjects} Subs</span>
                               </span>
-                              <button
-                                onClick={() => handleOpenMatrixForClass(item)}
-                                title="Edit subjects in Allocator"
-                                className="text-xs text-purple-600 hover:text-purple-800 font-semibold hover:underline cursor-pointer"
-                              >
-                                Edit
-                              </button>
                             </div>
                           ) : (
                             <button
                               onClick={() => handleOpenMatrixForClass(item)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
                               title="Open Allocator to map subjects for this batch"
                             >
                               <i className="fas fa-plus text-[10px]"></i>
-                              <span>Map Subjects</span>
+                              <span>Map Subs</span>
                             </button>
                           )
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="p-4 text-right pr-6">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="p-4 text-right pr-6 whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2 whitespace-nowrap shrink-0">
                           <button
                             onClick={() => {
                               setViewNodeItem(item);
                               setModalSelectedSemester("1st Semester");
                               setIsViewModalOpen(true);
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
                             title="View / Manage Class Details"
                           >
                             <i className="fas fa-eye text-[#8B5CF6]"></i> View
@@ -1432,7 +1522,7 @@ const CoursesHierarchyManager = () => {
                             <button
                               onClick={() => handleOpenMatrixForClass(item)}
                               title="Open Semester Allocator Grid for this Session"
-                              className="px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                             >
                               <i className="fas fa-cubes text-xs"></i> Allocator
                             </button>
@@ -1449,7 +1539,7 @@ const CoursesHierarchyManager = () => {
                               handleDeleteNode(level, item.deptId, item.indices);
                             }}
                             title="Delete this class"
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer ml-1"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer ml-1 whitespace-nowrap shrink-0"
                           >
                             <i className="fas fa-trash-alt text-xs"></i>
                           </button>
@@ -1530,26 +1620,144 @@ const CoursesHierarchyManager = () => {
                   </datalist>
                 </div>
 
-                {/* Branch */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Branch / Specialization
-                  </label>
-                  <input
-                    type="text"
-                    list="branchList"
-                    value={formData.branch}
-                    onChange={(e) =>
-                      setFormData({ ...formData, branch: e.target.value })
-                    }
-                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:bg-white transition-all outline-none"
-                    placeholder="e.g. Computer Science & Engineering"
-                  />
-                  <datalist id="branchList">
-                    {predefinedCourses.branches.map((b) => (
-                      <option key={b} value={b} />
-                    ))}
-                  </datalist>
+                {/* Multi-Branch Support */}
+                <div className="md:col-span-2 bg-gray-50/70 p-3.5 rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <i className="fas fa-code-branch text-purple-600"></i>
+                      Branch / Specialization (Multi-Branch Adding Support)
+                    </label>
+                    <span className="text-[11px] text-purple-600 font-medium">
+                      {(formData.branches?.length || 0)} branch(es) queued
+                    </span>
+                  </div>
+
+                  {/* Suggested preset chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                    <span className="text-[11px] text-gray-500 font-medium mr-1">Popular:</span>
+                    {POPULAR_BRANCHES.map((bName) => {
+                      const isSelected = (formData.branches || []).includes(bName);
+                      return (
+                        <button
+                          key={bName}
+                          type="button"
+                          onClick={() => {
+                            const current = formData.branches || [];
+                            if (isSelected) {
+                              setFormData({
+                                ...formData,
+                                branches: current.filter((b) => b !== bName),
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                branches: [...current, bName],
+                              });
+                            }
+                          }}
+                          className={`px-2.5 py-1 text-[11px] rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
+                            isSelected
+                              ? "bg-purple-600 text-white shadow-xs"
+                              : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
+                          }`}
+                        >
+                          <i className={`fas ${isSelected ? 'fa-check' : 'fa-plus'} text-[9px]`}></i>
+                          {bName}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Input with Add button */}
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      list="branchList"
+                      value={formData.branch}
+                      onChange={(e) =>
+                        setFormData({ ...formData, branch: e.target.value })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const val = formData.branch?.trim();
+                          if (val) {
+                            const current = formData.branches || [];
+                            if (!current.includes(val)) {
+                              setFormData({
+                                ...formData,
+                                branches: [...current, val],
+                                branch: "",
+                              });
+                            } else {
+                              setFormData({ ...formData, branch: "" });
+                            }
+                          }
+                        }
+                      }}
+                      className="flex-1 p-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 outline-none"
+                      placeholder="Type custom branch (e.g. Electrical Engineering) & press Enter or Add"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const val = formData.branch?.trim();
+                        if (val) {
+                          const current = formData.branches || [];
+                          if (!current.includes(val)) {
+                            setFormData({
+                              ...formData,
+                              branches: [...current, val],
+                              branch: "",
+                            });
+                          } else {
+                            setFormData({ ...formData, branch: "" });
+                          }
+                        }
+                      }}
+                      disabled={!formData.branch?.trim()}
+                      className="px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer shrink-0"
+                    >
+                      <i className="fas fa-plus text-[10px]"></i> Add Branch
+                    </button>
+                    <datalist id="branchList">
+                      {predefinedCourses.branches.map((b) => (
+                        <option key={b} value={b} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  {/* Selected Branches Tags */}
+                  {(formData.branches && formData.branches.length > 0) ? (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-white rounded-lg border border-gray-200">
+                      {formData.branches.map((br) => (
+                        <span
+                          key={br}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 text-purple-800 border border-purple-200 rounded-md text-xs font-medium"
+                        >
+                          <i className="fas fa-check-circle text-purple-600 text-[10px]"></i>
+                          {br}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                branches: formData.branches.filter((b) => b !== br),
+                              })
+                            }
+                            className="text-purple-400 hover:text-red-500 ml-1 cursor-pointer"
+                            title="Remove branch"
+                          >
+                            <i className="fas fa-times text-[10px]"></i>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-gray-500 italic">
+                      Tip: Select one or more branches above, or type custom branch names to batch-create.
+                    </p>
+                  )}
                 </div>
 
                 {/* Program Duration & Semesters Control */}
@@ -2006,6 +2214,122 @@ const CoursesHierarchyManager = () => {
                         <i className="fas fa-trash-alt"></i>
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* Course Branches & Multi-Branch Network */}
+                {viewNodeItem.courseName && activeViewCourse && (
+                  <div className="border-b pb-4 pt-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                          <i className="fas fa-code-branch text-purple-600"></i> All Course Branches ({activeViewCourseBranches.length})
+                        </span>
+                        <span className="text-[11px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium">
+                          Multi-Branch Management
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingBranchInModal(!isAddingBranchInModal)}
+                        className="text-xs text-purple-600 hover:text-purple-800 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <i className={`fas ${isAddingBranchInModal ? 'fa-minus' : 'fa-plus'} text-[10px]`}></i>
+                        {isAddingBranchInModal ? 'Cancel' : 'Add Branch'}
+                      </button>
+                    </div>
+
+                    {/* Branches Pills */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {activeViewCourseBranches.map((br, bIdx) => {
+                        const isCurrent = br.name === viewNodeItem.branchName;
+                        return (
+                          <div
+                            key={br._id || br.name || bIdx}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition ${
+                              isCurrent
+                                ? "bg-purple-100 border-purple-300 text-purple-900 font-semibold shadow-2xs"
+                                : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                            }`}
+                          >
+                            <span>{br.name}</span>
+                            <button
+                              onClick={() =>
+                                handleEditNode(
+                                  "branch",
+                                  viewNodeItem.deptId,
+                                  [viewNodeItem.indices[0], viewNodeItem.indices[1], bIdx],
+                                  br.name,
+                                )
+                              }
+                              title={`Edit ${br.name}`}
+                              className="text-purple-600 hover:text-purple-800 p-0.5 transition-colors"
+                            >
+                              <i className="fas fa-edit text-[10px]"></i>
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteNode(
+                                  "branch",
+                                  viewNodeItem.deptId,
+                                  [viewNodeItem.indices[0], viewNodeItem.indices[1], bIdx],
+                                )
+                              }
+                              title={`Delete ${br.name}`}
+                              className="text-gray-400 hover:text-red-600 p-0.5 transition-colors"
+                            >
+                              <i className="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Inline Add Branch Form */}
+                    {isAddingBranchInModal && (
+                      <div className="p-3 bg-purple-50/70 rounded-xl border border-purple-200 space-y-2.5 mt-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newBranchInput}
+                            onChange={(e) => setNewBranchInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddBranchToCourse(newBranchInput);
+                              }
+                            }}
+                            placeholder="e.g. Electronics & Communication Engineering"
+                            className="flex-1 text-xs px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAddBranchToCourse(newBranchInput)}
+                            disabled={!newBranchInput.trim()}
+                            className="px-3 py-2 bg-[#6D4C9C] hover:bg-[#5B21B6] disabled:opacity-40 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-xs cursor-pointer shrink-0"
+                          >
+                            <i className="fas fa-plus text-[10px]"></i> Save Branch
+                          </button>
+                        </div>
+
+                        {/* Quick preset buttons */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[11px] text-gray-500 font-medium mr-1">Quick Add:</span>
+                          {POPULAR_BRANCHES.filter(
+                            (pb) => !activeViewCourseBranches.some((b) => b.name.toLowerCase() === pb.toLowerCase())
+                          ).map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleAddBranchToCourse(preset)}
+                              className="px-2 py-0.5 rounded-full bg-white border border-purple-200 hover:bg-purple-100 text-purple-700 text-[11px] font-medium transition cursor-pointer flex items-center gap-1"
+                            >
+                              <i className="fas fa-plus text-[9px]"></i> {preset}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

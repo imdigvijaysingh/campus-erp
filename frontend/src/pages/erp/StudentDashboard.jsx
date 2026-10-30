@@ -2553,7 +2553,7 @@ const StudentDashboard = () => {
           onClose={() => setToast(null)} 
         />
       )}
-      {isRedirecting && <RedirectOverlay />}
+      {isRedirecting && <RedirectOverlay message="Logging in..." />}
       {isLoggingOut && <RedirectOverlay message="Logging out..." />}
 
       {/* Razorpay Online Payment Checkout Modal */}
