@@ -27,9 +27,10 @@ const parseUserAgent = (ua = '') => {
 };
 
 const sendTokenResponse = async (user, statusCode, res, req) => {
-  const isRememberMe = req?.body?.rememberMe === true;
-  const tokenExpiresIn = isRememberMe ? '7d' : '30m';
-  const sessionExpiresInMs = isRememberMe ? 7 * 24 * 60 * 60 * 1000 : 30 * 60 * 1000;
+  // Session timing strictly set to 2 hours across all roles
+  const SESSION_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
+  const tokenExpiresIn = process.env.JWT_EXPIRE || '2h';
+  const sessionExpiresInMs = SESSION_DURATION_MS;
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: tokenExpiresIn
@@ -40,8 +41,9 @@ const sendTokenResponse = async (user, statusCode, res, req) => {
   const { browser, os, device } = parseUserAgent(ua);
   const ip = req?.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req?.socket?.remoteAddress || req?.ip || '127.0.0.1';
 
+  let session = null;
   try {
-    await Session.create({
+    session = await Session.create({
       userId: user._id,
       institutionId: user.institutionId || null,
       tokenHash,
@@ -57,6 +59,9 @@ const sendTokenResponse = async (user, statusCode, res, req) => {
   res.status(statusCode).json({
     success: true,
     token,
+    sessionId: session?._id || null,
+    expiresAt: new Date(Date.now() + sessionExpiresInMs).toISOString(),
+    expiresInMs: sessionExpiresInMs,
     user: {
       id: user._id,
       username: user.username,
@@ -296,6 +301,44 @@ exports.revokeAllOtherSessions = async (req, res) => {
     });
 
     res.status(200).json({ success: true, message: 'Logged out of all other devices successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Logout user and revoke session ID
+// @route   POST /api/v1/auth/logout
+// @access  Public / Private
+exports.logout = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let token = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.body?.token) {
+      token = req.body.token;
+    }
+
+    const sessionId = req.body?.sessionId;
+
+    if (token) {
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      await Session.updateMany({ tokenHash }, { $set: { isRevoked: true } });
+    }
+    if (sessionId) {
+      await Session.updateOne({ _id: sessionId }, { $set: { isRevoked: true } });
+    }
+
+    if (req.user) {
+      await logAuditEvent(req, {
+        action: 'LOGOUT',
+        resource: 'Session',
+        details: `User ${req.user.username || req.user._id} signed out / session revoked`,
+        riskLevel: 'LOW'
+      }).catch(() => {});
+    }
+
+    res.status(200).json({ success: true, message: 'Session successfully revoked and logged out' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

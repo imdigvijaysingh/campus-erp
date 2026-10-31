@@ -2,6 +2,8 @@ const Student = require('../models/Student');
 const Activity = require('../models/Activity');
 const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const Session = require('../models/Session');
 const User = require('../models/User');
 const Role = require('../models/Role');
 const Institution = require('../models/Institution');
@@ -9,10 +11,10 @@ const Program = require('../models/Program');
 const Level = require('../models/Level');
 const AcademicSession = require('../models/AcademicSession');
 
-// Generate JWT for student
+// Generate JWT for student (strictly 2h session)
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: '2h',
   });
 };
 
@@ -442,13 +444,37 @@ const authStudent = async (req, res) => {
         return res.status(401).json({ message: 'Account disabled. Contact administration.' });
       }
 
+      const token = generateToken(student._id);
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const ua = req?.headers?.['user-agent'] || '';
+      const ip = req?.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req?.socket?.remoteAddress || req?.ip || '127.0.0.1';
+      const SESSION_MS = 2 * 60 * 60 * 1000;
+
+      let session = null;
+      try {
+        session = await Session.create({
+          userId: student._id,
+          institutionId: student.institutionId || null,
+          tokenHash,
+          deviceInfo: { browser: 'Browser', os: 'OS', device: 'Desktop', rawUserAgent: ua },
+          ip,
+          location: 'India',
+          expiresAt: new Date(Date.now() + SESSION_MS)
+        });
+      } catch (err) {
+        console.error('Student session creation error:', err.message);
+      }
+
       res.json({
         _id: student._id,
         studentId: student.studentId,
         name: student.name,
         email: student.email,
         photo: student.photo,
-        token: generateToken(student._id),
+        token,
+        sessionId: session?._id || null,
+        expiresAt: new Date(Date.now() + SESSION_MS).toISOString(),
+        expiresInMs: SESSION_MS,
       });
     } else {
       res.status(401).json({ message: 'Invalid Student ID or password' });

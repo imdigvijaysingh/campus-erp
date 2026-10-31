@@ -2,6 +2,7 @@ const express = require('express');
 const { 
   register, 
   login, 
+  logout,
   getMe, 
   updateCredentials, 
   getUsersCount,
@@ -31,6 +32,7 @@ const requireAdminRegistration = async (req, res, next) => {
 
 router.post('/register', requireAdminRegistration, register);
 router.post('/login', login);
+router.post('/logout', logout);
 router.get('/me', protect, getMe);
 router.put('/updatedetails', protect, updateCredentials);
 router.get('/users/count', protect, getUsersCount);

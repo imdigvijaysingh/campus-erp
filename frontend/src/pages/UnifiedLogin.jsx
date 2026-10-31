@@ -43,11 +43,18 @@ const UnifiedLogin = () => {
         rememberMe
       });
 
-      const { user, token } = res.data;
+      const { user, token, sessionId, expiresInMs } = res.data;
+
+      const durationMs = expiresInMs || (2 * 60 * 60 * 1000); // 2 hours strictly
+      const sessionExpiresAt = Date.now() + durationMs;
 
       localStorage.setItem("isAdminLoggedIn", "true");
       localStorage.setItem("cms_token", token);
       localStorage.setItem("adminUsername", user.username);
+      localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
+      if (sessionId) {
+        localStorage.setItem("sessionId", sessionId);
+      }
 
       if (user.role) {
         localStorage.setItem("adminRole", user.role.name || "Student");
@@ -68,6 +75,8 @@ const UnifiedLogin = () => {
       setTimeout(() => {
       if (user.role && user.role.name === "Student") {
         localStorage.setItem("studentToken", token);
+        localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
+        if (sessionId) localStorage.setItem("sessionId", sessionId);
         navigate("/erp/dashboard", {
           state: { toastMessage: "Login successful!", toastType: "success" },
         });

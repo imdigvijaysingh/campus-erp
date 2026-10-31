@@ -27,11 +27,19 @@ const TopNavbar = ({ toggleSidebar, isCollapsed, toggleCollapse }) => {
   const adminUsername = localStorage.getItem('adminUsername') || 'instadmin';
   const adminRole = localStorage.getItem('adminRole') || 'Campus Administrator';
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoading(true);
+    const token = localStorage.getItem('cms_token');
+    const sessionId = localStorage.getItem('sessionId');
+    try {
+      await api.post('/auth/logout', { token, sessionId });
+    } catch (_) {}
+
     setTimeout(() => {
       localStorage.removeItem('isAdminLoggedIn');
       localStorage.removeItem('cms_token');
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('sessionExpiresAt');
       localStorage.removeItem('adminRole');
       localStorage.removeItem('userPermissions');
       navigate('/authentication/index', { state: { toastMessage: 'Logged out successfully', toastType: 'success' } });

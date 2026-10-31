@@ -62,8 +62,10 @@ api.interceptors.response.use(
     // 1. Session Revocation (401)
     if (response && response.status === 401) {
       localStorage.removeItem("cms_token");
+      localStorage.removeItem("studentToken");
       localStorage.removeItem("isAdminLoggedIn");
       localStorage.removeItem("adminUsername");
+      localStorage.removeItem("sessionExpiresAt");
 
       if (typeof window !== "undefined" && window.location.pathname !== "/authentication/index") {
         window.dispatchEvent(new CustomEvent('sessionExpired'));

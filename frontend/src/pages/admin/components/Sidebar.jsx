@@ -3,16 +3,25 @@ import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import RedirectOverlay from '../../../components/common/RedirectOverlay';
 import shyvoraLogo from '../../../assets/images/shyvora_s_logo.png';
 import InfoTooltip from '../../../components/common/InfoTooltip';
+import api from '../../../utils/api';
 
 const Sidebar = ({ isOpen, toggleSidebar, isCollapsed, toggleCollapse }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
+    const token = localStorage.getItem('cms_token');
+    const sessionId = localStorage.getItem('sessionId');
+    try {
+      await api.post('/auth/logout', { token, sessionId });
+    } catch (_) {}
+
     setTimeout(() => {
       localStorage.removeItem('cms_token');
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('sessionExpiresAt');
       localStorage.removeItem('isAdminLoggedIn');
       localStorage.removeItem('adminRole');
       localStorage.removeItem('userPermissions');

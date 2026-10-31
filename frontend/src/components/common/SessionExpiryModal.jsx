@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const DURATION_MS = 8500; // 8.5 seconds smooth countdown
+const DURATION_MS = 3000; // Strictly 3-second countdown counter
+const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours session lifetime
 
 const SessionExpiryModal = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [progress, setProgress] = useState(0); // 0 to 1
   const [isCompleted, setIsCompleted] = useState(false);
-  const [cardSize, setCardSize] = useState({ width: 400, height: 440 });
+  const [cardSize, setCardSize] = useState({ width: 400, height: 480 });
   const [headPoints, setHeadPoints] = useState({ left: null, right: null });
 
   const cardRef = useRef(null);
@@ -17,22 +18,70 @@ const SessionExpiryModal = () => {
   const animationFrameRef = useRef(null);
   const startTimeRef = useRef(null);
 
-  // Listen for session expired events + expose global helper for testing
-  useEffect(() => {
-    const handleSessionExpired = () => {
-      setIsOpen(true);
-      setProgress(0);
-      setIsCompleted(false);
-      startTimeRef.current = null;
-    };
+  // Automatically revoke session on the backend when session expires
+  const revokeBackendSession = () => {
+    try {
+      const token = localStorage.getItem("cms_token") || localStorage.getItem("studentToken");
+      const sessionId = localStorage.getItem("sessionId");
+      if (token || sessionId) {
+        const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5000/api/v1" : "/api/v1");
+        fetch(`${baseUrl}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ token, sessionId })
+        }).catch(() => {});
+      }
+    } catch (_) {}
+  };
 
+  const handleSessionExpired = () => {
+    revokeBackendSession();
+    setIsOpen(true);
+    setProgress(0);
+    setIsCompleted(false);
+    startTimeRef.current = null;
+  };
+
+  // 1. Listen for session expired events + expose global helper for testing
+  useEffect(() => {
     window.addEventListener('sessionExpired', handleSessionExpired);
     window.__triggerSessionExpiry = handleSessionExpired;
+    window.__testSessionTimeout = (seconds = 3) => {
+      localStorage.setItem("sessionExpiresAt", (Date.now() + seconds * 1000).toString());
+    };
 
     return () => {
       window.removeEventListener('sessionExpired', handleSessionExpired);
       delete window.__triggerSessionExpiry;
+      delete window.__testSessionTimeout;
     };
+  }, []);
+
+  // 2. Active 2-Hour Inactivity & Expiry Monitor
+  // Automatically detects if 2 hours have passed without signing out
+  useEffect(() => {
+    const checkSessionExpiry = () => {
+      const token = localStorage.getItem("cms_token") || localStorage.getItem("studentToken");
+      if (!token) return;
+
+      let expiresAt = Number(localStorage.getItem("sessionExpiresAt"));
+      if (!expiresAt) {
+        expiresAt = Date.now() + SESSION_TIMEOUT_MS;
+        localStorage.setItem("sessionExpiresAt", expiresAt.toString());
+      }
+
+      if (Date.now() >= expiresAt) {
+        // 2 hours reached! Automatically revoke session and trigger 3-second modal
+        handleSessionExpired();
+      }
+    };
+
+    // Check every 3 seconds
+    const intervalId = setInterval(checkSessionExpiry, 3000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // Measure card dimensions accurately for pixel-perfect border SVG
@@ -58,12 +107,18 @@ const SessionExpiryModal = () => {
     setIsOpen(false);
     setIsCompleted(false);
     
-    // Thoroughly flush stored tokens and auth flags
+    revokeBackendSession();
+
+    // Thoroughly flush stored tokens, session identifiers, and auth flags
     localStorage.removeItem("cms_token");
+    localStorage.removeItem("studentToken");
+    localStorage.removeItem("sessionId");
+    localStorage.removeItem("sessionExpiresAt");
     localStorage.removeItem("isAdminLoggedIn");
     localStorage.removeItem("adminUsername");
     localStorage.removeItem("adminRole");
     localStorage.removeItem("userPermissions");
+    localStorage.removeItem("studentId");
 
     // Seamlessly navigate to Unified Login page
     window.location.href = '/authentication/index';
@@ -76,12 +131,12 @@ const SessionExpiryModal = () => {
 
     const fallbackTimer = setTimeout(() => {
       redirectToLogin();
-    }, DURATION_MS + 600);
+    }, DURATION_MS + 350);
 
     return () => clearTimeout(fallbackTimer);
   }, [isOpen]);
 
-  // Run the smooth border animation loop (60fps)
+  // Run the smooth border animation loop (60fps) over 3 seconds
   useEffect(() => {
     if (!isOpen || isCompleted) return;
 
@@ -129,19 +184,22 @@ const SessionExpiryModal = () => {
     };
   }, [isOpen, isCompleted, cardSize]);
 
-  // When dual lasers collide at bottom center, allow 500ms for glowing burst effect then redirect
+  // When dual lasers collide at bottom center, allow 250ms for glowing burst effect then redirect
   useEffect(() => {
     if (!isCompleted) return;
 
     const burstTimer = setTimeout(() => {
       redirectToLogin();
-    }, 500);
+    }, 250);
 
     return () => clearTimeout(burstTimer);
   }, [isCompleted]);
 
 
   if (!isOpen) return null;
+
+  // Exact 3, 2, 1 seconds counter
+  const secondsLeft = Math.max(1, Math.ceil((1 - progress) * 3));
 
   // Geometry calculations for dual symmetric border tracing
   const strokeWidth = 4.5;
@@ -268,7 +326,6 @@ const SessionExpiryModal = () => {
               <circle r="12" fill="rgba(168, 85, 247, 0.4)" filter="blur(3px)" />
               <circle r="7" fill="rgba(255, 255, 255, 0.85)" filter="blur(1px)" />
               <circle r="4" fill="#ffffff" />
-              {/* Radiant spark crosshair */}
               <line x1="-7" y1="0" x2="7" y2="0" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
               <line x1="0" y1="-7" x2="0" y2="7" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
             </g>
@@ -279,7 +336,6 @@ const SessionExpiryModal = () => {
               <circle r="12" fill="rgba(168, 85, 247, 0.4)" filter="blur(3px)" />
               <circle r="7" fill="rgba(255, 255, 255, 0.85)" filter="blur(1px)" />
               <circle r="4" fill="#ffffff" />
-              {/* Radiant spark crosshair */}
               <line x1="-7" y1="0" x2="7" y2="0" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
               <line x1="0" y1="-7" x2="0" y2="7" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
             </g>
@@ -303,41 +359,50 @@ const SessionExpiryModal = () => {
           }`}
         >
           {/* Top Red Security Header */}
-          <div className="relative bg-gradient-to-br from-red-500 via-rose-500 to-red-600 p-7 flex flex-col items-center justify-center overflow-hidden">
+          <div className="relative bg-gradient-to-br from-red-500 via-rose-500 to-red-600 p-6 flex flex-col items-center justify-center overflow-hidden">
             {/* Ambient background decoration */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-xl pointer-events-none"></div>
 
             {/* Lock Emblem with glowing ring */}
-            <div className="relative w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md shadow-inner ring-4 ring-white/30">
-              <i className="fas fa-lock text-3xl text-white drop-shadow-md"></i>
+            <div className="relative w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md shadow-inner ring-4 ring-white/30">
+              <i className="fas fa-lock text-2xl text-white drop-shadow-md"></i>
             </div>
           </div>
 
           {/* Card Body */}
-          <div className="p-8 sm:p-9 text-center">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2.5 tracking-tight font-['Plus_Jakarta_Sans',sans-serif]">
+          <div className="p-6 sm:p-8 text-center">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 tracking-tight font-['Plus_Jakarta_Sans',sans-serif]">
               Session Expired
             </h2>
-            <p className="text-slate-500 text-sm sm:text-base leading-relaxed mb-7 max-w-xs mx-auto">
-              For your security, your session has timed out. Please log in again to continue working.
+            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed mb-4 max-w-xs mx-auto">
+              Your 2-hour session has ended. Your session ID has been automatically revoked for security.
             </p>
+
+            {/* Prominent 3-Second Countdown Counter Badge */}
+            <div className="my-4 flex flex-col items-center justify-center">
+              <div className="relative w-16 h-16 rounded-2xl bg-purple-50 border-2 border-purple-500/30 flex items-center justify-center shadow-inner mb-2">
+                <span className="text-3xl font-black text-purple-700 tracking-tight font-mono">
+                  {secondsLeft}s
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span>
+                  Auto-redirecting in <strong className="text-purple-700 font-bold">{secondsLeft}s</strong>
+                </span>
+              </div>
+            </div>
 
             {/* Log In Again Button */}
             <button
               type="button"
               onClick={redirectToLogin}
-              className="w-full relative z-40 cursor-pointer group bg-gradient-to-r from-[#6D4C9C] via-[#7C3AED] to-[#5B21B6] hover:from-[#5B21B6] hover:to-[#4C1D95] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-purple-600/30 hover:shadow-xl hover:shadow-purple-600/40 hover:-translate-y-0.5 active:translate-y-0 transition-all focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:ring-offset-2 flex items-center justify-center gap-2.5 text-base"
+              className="w-full relative z-40 cursor-pointer group bg-gradient-to-r from-[#6D4C9C] via-[#7C3AED] to-[#5B21B6] hover:from-[#5B21B6] hover:to-[#4C1D95] text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-purple-600/30 hover:shadow-xl hover:shadow-purple-600/40 hover:-translate-y-0.5 active:translate-y-0 transition-all focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:ring-offset-2 flex items-center justify-center gap-2.5 text-sm"
             >
-              <span>Log In Again</span>
-              <i className="fas fa-arrow-right text-sm transition-transform group-hover:translate-x-1"></i>
+              <span>Log In Now</span>
+              <i className="fas fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
             </button>
-
-            {/* Non-numerical Status Indicator (strictly NO numbers) */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Auto-redirecting to login portal</span>
-            </div>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import ReceiptModal from '../../components/finance/ReceiptModal';
 import HallTicketModal from '../../components/exam/HallTicketModal';
 import ReportCardModal from '../../components/exam/ReportCardModal';
 import InfoTooltip from '../../components/common/InfoTooltip';
+import api from '../../utils/api';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -519,10 +520,20 @@ const StudentDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
+    const token = localStorage.getItem('studentToken') || localStorage.getItem('cms_token');
+    const sessionId = localStorage.getItem('sessionId');
+    try {
+      await api.post('/auth/logout', { token, sessionId });
+    } catch (_) {}
+
     setTimeout(() => {
       localStorage.removeItem('studentToken');
+      localStorage.removeItem('cms_token');
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('sessionExpiresAt');
+      localStorage.removeItem('studentId');
       navigate('/authentication/index', { state: { toastMessage: 'Logged out successfully', toastType: 'success' } });
     }, 1500);
   };
