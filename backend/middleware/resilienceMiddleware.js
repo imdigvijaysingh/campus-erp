@@ -78,9 +78,9 @@ const memoryCushionGuard = (req, res, next) => {
 
 /**
  * Context Call Budget / Deadline Middleware (Workstream 0.2)
- * Enforces strict 3500ms application API handler execution budget.
+ * Enforces resilient 30000ms application API handler execution budget.
  */
-const apiTimeoutGuard = (timeoutMs = 3500) => {
+const apiTimeoutGuard = (timeoutMs = 30000) => {
   return (req, res, next) => {
     // Health checks and ping endpoints bypass timeout
     if (req.path === '/health' || req.path === '/api/v1/health' || req.path === '/ping') {
@@ -95,7 +95,7 @@ const apiTimeoutGuard = (timeoutMs = 3500) => {
         res.status(504).json({
           status: 504,
           code: 'GATEWAY_TIMEOUT',
-          message: 'Upstream request context deadline exceeded. The operation was aborted to protect system stability and avoid resource lock amplification.',
+          message: 'Server took too long to respond. Please check your connection and try again.',
           traceId
         });
       }

@@ -139,36 +139,36 @@ exports.login = async (req, res, next) => {
       .populate('studentProfile');
 
     if (!user) {
-      await logAuditEvent(req, {
+      logAuditEvent(req, {
         action: 'FAILED_LOGIN',
         resource: 'Session',
         details: `Failed sign-in attempt for identifier "${identifier}"`,
         riskLevel: 'MEDIUM'
-      });
+      }).catch(() => {});
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      await logAuditEvent(req, {
+      logAuditEvent(req, {
         action: 'FAILED_LOGIN',
         resource: 'Session',
         details: `Incorrect password attempt for user "${user.username}"`,
         riskLevel: 'HIGH'
-      });
+      }).catch(() => {});
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
     // Attach user to req for audit logger
     req.user = user;
 
-    await logAuditEvent(req, {
+    logAuditEvent(req, {
       action: 'LOGIN',
       resource: 'Session',
       details: `User ${user.username} signed in successfully`,
       riskLevel: 'LOW'
-    });
+    }).catch((e) => console.error('Audit log error:', e.message));
 
     await sendTokenResponse(user, 200, res, req);
   } catch (error) {

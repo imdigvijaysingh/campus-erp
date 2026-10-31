@@ -25,9 +25,9 @@ const app = express();
 const traceMiddleware = require('./middleware/traceMiddleware');
 app.use(traceMiddleware);
 
-// Strict Context Deadline Call Budget (3500ms API Handler Budget - Phase 0 Workstream 0.2)
+// Context Deadline Call Budget (30s API Handler Budget)
 const { apiTimeoutGuard } = require('./middleware/resilienceMiddleware');
-app.use(apiTimeoutGuard(3500));
+app.use(apiTimeoutGuard(30000));
 
 // Split-Brain Quorum & Network Partition Lock (Phase 4 Workstream 4.2)
 const { enforceQuorumGuard } = require('./middleware/quorumGuard');

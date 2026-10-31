@@ -24,7 +24,7 @@ const calculateFullJitterDelay = (attempt, baseMs = 300, maxMs = 3000) => {
 
 const api = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 5000, // Edge Gateway Context Budget: 5000ms
+  timeout: 30000, // Resilient context budget: 30 seconds
   headers: {
     "Content-Type": "application/json",
   },
